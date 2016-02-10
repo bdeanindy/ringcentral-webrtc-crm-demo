@@ -1,0 +1,8 @@
+*.swp
+*.swo
+*.log
+
+.env
+
+node_modules
+public/vendor
