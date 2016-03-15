@@ -2,3 +2,10 @@ extends layout
 
 block content
   h1= title
+
+  div(class='row-fluid')
+      div(id='webPhoneDialer', class='span4 offset4')
+            h3= webPhoneTitle
+            a.btn.btn-primary(href='#')
+                  span.glyphicon.glyphicon-headphones
+                        |  Waiting...

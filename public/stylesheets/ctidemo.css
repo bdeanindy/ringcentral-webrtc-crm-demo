@@ -1,6 +1,9 @@
 .fixed {font-family:courier,serif; background-color:#efefef; color:black; font-weight:bold;}
 
-body {padding-top:70px}
+body {
+    padding-top:70px;
+    margin: 0;
+}
 pre {margin-bottom:2em;}
 
 .rcPgTitle {margin:0 0 0.8em 0; padding:0;}

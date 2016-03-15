@@ -37,7 +37,8 @@
     "fetch": "~0.10.1",
     "ringcentral": "~2.0.1",
     "ringcentral-helpers": "^0.1.0",
-    "ringcentral-web-phone": "^0.2.0"
+    "ringcentral-web-phone": "^0.2.0",
+    "socket.io": "^1.4.5"
   },
   "resolutions": {
     "fetch": "master"

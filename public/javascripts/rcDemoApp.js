@@ -1,43 +1,62 @@
+// VARS
+var line;
+var platform;
+/*
+var webPhone = new RingCentral.WebPhone({
+    audioHelper: true
+});
+*/
+
+function callStarted(e) {
+    line = e;
+}
+
+function registerSIP( checkFlags, transport ) {
+    transport = transport || 'WSS';
+    return platform
+        .post('/client-info/sip-provision', {
+            sipInfo: [{
+                transport: transport
+            }]
+        })
+        .then(function(res) {
+
+
+            var data = res.json();
+
+            //data.appKey = localStorage.webPhoneAppKey;
+
+            console.log("Sip Provisioning Data from RC API: " + JSON.stringify(data));
+
+            return webPhone.register(data, checkFlags)
+                .then(function(){
+                    console.log('Registered');
+                })
+                .catch(function(e) {
+                    var err = e && e.status_code && e.reason_phrase
+                        ? new Error(e.status_code + ' ' + e.reason_phrase)
+                        : (e && e.data)
+                                  ? new Error('SIP Error: ' + e.data)
+                                  : new Error('SIP Error: ' + (e || 'Unknown error'));
+                    console.error('SIP Error: ' + ((e && e.data) || e) + '\n');
+                    return Promise.reject(err);
+                });
+
+        }).catch(function(e) {
+            console.error(e);
+            return Promise.reject(e);
+        });
+}
+
 // Make sure we have jQuery before we continue
 $(function() {
-  //console.log( 'jQuery should now be loaded...' );
+    //console.log( 'jQuery should now be loaded...' );
 
-  // RC Method
-  var serverSideRingOut = function serverSideRingOut( options, callback ) {
-    // TODO: Need to make the request to server-side code to make the call
-  };
+    // TODO: Once a user agent is logged into the phone number, show the webPhoneDialer
+    // TODO: Once the webPhoneDialer has a valid RC access_token and has registered SIP, enable callSupport button and change display value to 'Call Support'
 
-  var clientSideRingOut = function clientSideRingOut( options, callback ) {
-    // TODO: Need to make the request client-side to make the call
-  };
+    // Cache the variable
+    var $webPhoneDialer = $('#webPhoneDialer');
+    var $callButton = $('#callButton');
 
-  var serverSideSms = function serverSideSms() {
-    // TODO: Need to make the request to server-side code to send the SMS
-  };
-
-  var $ringOutSchedule = $('#ringOutSchedule');
-  $ringOutSchedule.on('click', function( evt ) {
-    $.post('/rc/ringOut', {
-      rcRingOutType: 'schedule'
-    }, function( data, msg, xhr ) {
-      console.log('Proxied POST request to /rc/ringOut was successful');
-      console.log( 'DATA: ', data );
-      console.log( 'MSG: ', msg );
-    });
-  });
-
-  var $sendSMS = $('#sendSMS');
-  $sendSMS.on('click', function( evt ) {
-    $.post('/rc/sms', {
-      targets: [
-        {phoneNumber: '', extension: ''}
-      ],
-      originator: '', // Phone number associated with RingCentral and able to send SMS
-      textMsg: '' // The message you want to send
-    }, function( data, msg, xhr ) {
-      console.log( 'Proxied SMS POST request to /rc/sendSMS was successful' );
-      console.log( 'DATA: ', data );
-      console.log( 'MSG: ', msg );
-    })
-  });
 });
