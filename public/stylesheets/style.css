@@ -6,3 +6,11 @@ body {
 a {
   color: #00B7FF;
 }
+
+#rcJumbotron {
+  margin-top: 1.5em;
+}
+
+#glipAuthContainer {
+  margin-top: 1.5em;
+}
