@@ -9,6 +9,14 @@ var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 
+var routes = require('./routes');
+
+var app = express();
+app.io = require('socket.io')(); 
+app.io.on('connection', function(socket) {
+    socket.emit('news', {hello: 'world'});
+});
+
 // Setup RingCentral
 var RC = require('ringcentral');
 var sdk = new RC({
@@ -20,7 +28,7 @@ var sdk = new RC({
 var platform = sdk.platform();
 var subscription = sdk.createSubscription();
 var registeredSubscriptions = [];
-var accountPresence = [];
+app.accountPresence = [];
 
 platform
     .login({
@@ -36,7 +44,7 @@ platform
     });
 
 platform.on(platform.events.loginSuccess, function(evt) {
-    // TODO: Emit on socket.io
+    
 });
 
 function getExtensions() {
@@ -44,12 +52,12 @@ function getExtensions() {
         .get('/account/~/extension')
         .then(function(extensions) {
             var data = extensions.json();
-            console.log(' getExtension RESPONSE DATA: ', data);
+            //console.log(' getExtension RESPONSE DATA: ', data);
             return data.records.map(function(ext) {
                 var detailedPresenceURI = '/account/~/extension/' + ext.id + '/presence?detailedTelephonyState=true';
                 platform.get(detailedPresenceURI).then(function(presence) {
-                    accountPresence.push(presence.json());
-                    console.log('ACCOUNT PRESENCE: ', accountPresence);
+                    app.accountPresence.push(presence.json());
+                    console.log('ACCOUNT PRESENCE: ', app.accountPresence);
                 })
                 .catch(function(e) {
                     console.error(e);
@@ -89,11 +97,6 @@ subscription.on(subscription.events.notification, function(msg) {
         console.log('NEW SUBSCRIPTION MESSAGE: ', msg);
     }
 });
-
-var routes = require('./routes');
-
-var app = express();
-app.io = require('socket.io');
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
