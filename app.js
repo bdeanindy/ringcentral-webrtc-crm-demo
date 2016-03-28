@@ -9,7 +9,6 @@ var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 
-
 // Setup RingCentral
 var RC = require('ringcentral');
 var sdk = new RC({
@@ -17,21 +16,81 @@ var sdk = new RC({
     appKey: process.env.RC_APP_KEY,
     appSecret: process.env.RC_APP_SECRET 
 });
-var platform = sdk.platform()
+
+var platform = sdk.platform();
+var subscription = sdk.createSubscription();
+var registeredSubscriptions = [];
+var accountPresence = [];
+
+platform
     .login({
         username: process.env.RC_USERNAME,
         extension: process.env.RC_EXTENSION,
         password: process.env.RC_PASSWORD 
     })
-    .then(function(data) {
-        console.log('RC AUTH: ', data);
-    })
+    .then(getExtensions)
+    .then(createSubscription)
     .catch(function(e) {
         console.error('RC LOGIN ERROR: ', e);
         throw e;
     });
 
-var routes = require('./routes/index');
+platform.on(platform.events.loginSuccess, function(evt) {
+    // TODO: Emit on socket.io
+});
+
+function getExtensions() {
+    return platform
+        .get('/account/~/extension')
+        .then(function(extensions) {
+            var data = extensions.json();
+            console.log(' getExtension RESPONSE DATA: ', data);
+            return data.records.map(function(ext) {
+                var detailedPresenceURI = '/account/~/extension/' + ext.id + '/presence?detailedTelephonyState=true';
+                platform.get(detailedPresenceURI).then(function(presence) {
+                    accountPresence.push(presence.json());
+                    console.log('ACCOUNT PRESENCE: ', accountPresence);
+                })
+                .catch(function(e) {
+                    console.error(e);
+                    throw(e);
+                });;
+                return detailedPresenceURI;
+            });
+        })
+        .catch(function(e) {
+            console.error(e);
+            throw e;
+        });
+}
+
+function createSubscription(eventFilters) {
+    return subscription
+        .setEventFilters(eventFilters)
+        .register()
+        .then(function(response) {
+            // TODO: Handle create/renew/loginSuccess/loginFail
+            //console.log('SUBSCRIPTION RESPONSE: ', response);
+            registeredSubscriptions.push(response);
+        })
+        .catch(function(e) {
+            console.error(e);
+            throw e;
+        });
+}
+
+subscription.on(subscription.events.notification, function(msg) {
+    if(msg.event.indexOf('/presence') > -1) {
+        // TODO: Update the account presence
+        console.log('NEW SUBSCRIPTION MESSAGE FOR PRESENCE: ', msg);
+    } else if(msg.event.indexOf('/message-store') > -1) {
+        console.log('NEW SUBSCRIPTION MESSAGE FOR MESSAGE STORE: ', msg);
+    } else {
+        console.log('NEW SUBSCRIPTION MESSAGE: ', msg);
+    }
+});
+
+var routes = require('./routes');
 
 var app = express();
 app.io = require('socket.io');
