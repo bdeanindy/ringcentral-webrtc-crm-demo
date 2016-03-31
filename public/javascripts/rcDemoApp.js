@@ -39,7 +39,16 @@ $(function() {
     socket.on('sipProvision', function(data, fn) {
         console.log('New RC WebRTC Sip Provision: ', data);
         rcSipProvision = data.sipInfo[0] || data.sipInfo;;
+        console.log('RingCentral: ', RingCentral);
         webPhone = new RingCentral.WebPhone(data, {logLevel:3});
+        webPhone.userAgent.on('invite', onInvite);
+        webPhone.userAgent.on('connecting', onConnecting);
+        webPhone.userAgent.on('connected', onConnected);
+        webPhone.userAgent.on('disconnected', onDisconnected);
+        webPhone.userAgent.on('registered', onRegistered);
+        webPhone.userAgent.on('unregistered', onUnregistered);
+        webPhone.userAgent.on('registrationFailed', onRegistrationFailed);
+        webPhone.userAgent.on('message', onMessage);
     });
 });
 
@@ -103,6 +112,32 @@ function registerSIP( checkFlags, transport ) {
             console.error(e);
             return Promise.reject(e);
         });
+}
+
+/******************* RING CENTRAL WEB PHONE INTERNAL EVENT HANDLERS ******************/
+function onInvite() {
+    console.log('onInvite args: ', arguments);
+}
+function onConnecting() {
+    console.log('onConnecting: ', arguments);
+}
+function onConnected() {
+    console.log('onConnected: ', arguments);
+}
+function onDisconnected() {
+    console.log('onDisconnected: ', arguments);
+}
+function onRegistered() {
+    console.log('onRegistered: ', arguments);
+}
+function onUnregistered() {
+    console.log('onUnregistered: ', arguments);
+}
+function onRegistrationFailed() {
+    console.log('onRegistrationFailed: ', arguments);
+}
+function onMessage() {
+    console.log('onMessage: ', arguments);
 }
 
 // TODO: Once the webPhoneDialer has a valid RC access_token and has registered SIP, enable callSupport button and change display value to 'Call Support'
