@@ -13,8 +13,48 @@ var routes = require('./routes');
 
 var app = express();
 app.io = require('socket.io')(); 
+
+// New Socket Connection, Let's bootstrap it with the Account Presence
+// this will update the Call Me button
 app.io.on('connection', function(socket) {
-    socket.emit('news', {hello: 'world'});
+    // Cache for presence state 
+    var availableNow = false;
+
+    // The loops through all the presence information and tells if someone is logged in to RingCentral
+    app.locals.accountPresence.forEach(function(item) {
+        if('Available' === item.presenceStatus) {
+            availableNow = true;
+        }
+    });
+
+    // This will broadcast our initialization state to the client
+    socket.emit('online', {
+        online: availableNow
+    }, function(data) {
+        console.log('Available Now Received: ', data);
+    });
+
+    // This will broadcast our RingCentral access_token to the client
+    socket.emit('rcAuth', {token: app.locals.rcAuth.access_token}, function(data) {
+        console.log('rcAuth received: ', data);
+    });
+});
+
+app.io.on('sipProvision', function(socket) {
+    platform
+        .post('/client-info/sip-provision', {
+            sipInfo: [{transport: 'WSS'}]
+        })
+        .then(function(res) {
+            socket.emit('sipProvision', res.json(), function(data) {
+                console.log('sipProvision received: ', data);
+            });
+        })
+        .catch(function(e) {
+            console.error(e);
+            throw e;
+        });
+
 });
 
 // Setup RingCentral
@@ -28,7 +68,7 @@ var sdk = new RC({
 var platform = sdk.platform();
 var subscription = sdk.createSubscription();
 var registeredSubscriptions = [];
-app.accountPresence = [];
+app.locals.accountPresence = [];
 
 platform
     .login({
@@ -43,8 +83,9 @@ platform
         throw e;
     });
 
-platform.on(platform.events.loginSuccess, function(evt) {
-    
+platform.on(platform.events.loginSuccess, function(data) {
+    //console.log('RC PLATFOMR LOGIN SUCCESS DATA: ', data.json());
+    app.locals.rcAuth = data.json();
 });
 
 function getExtensions() {
@@ -56,8 +97,8 @@ function getExtensions() {
             return data.records.map(function(ext) {
                 var detailedPresenceURI = '/account/~/extension/' + ext.id + '/presence?detailedTelephonyState=true';
                 platform.get(detailedPresenceURI).then(function(presence) {
-                    app.accountPresence.push(presence.json());
-                    console.log('ACCOUNT PRESENCE: ', app.accountPresence);
+                    app.locals.accountPresence.push(presence.json());
+                    //console.log('ACCOUNT PRESENCE: ', app.locals.accountPresence);
                 })
                 .catch(function(e) {
                     console.error(e);
