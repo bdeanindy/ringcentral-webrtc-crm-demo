@@ -38,22 +38,21 @@ app.io.on('connection', function(socket) {
     socket.emit('rcAuth', {token: app.locals.rcAuth.access_token}, function(data) {
         console.log('rcAuth received: ', data);
     });
-});
 
-app.io.on('sipProvision', function(socket) {
-    platform
-        .post('/client-info/sip-provision', {
-            sipInfo: [{transport: 'WSS'}]
-        })
-        .then(function(res) {
-            socket.emit('sipProvision', res.json(), function(data) {
-                console.log('sipProvision received: ', data);
+    socket.on('sipProvision', function(options) {
+        platform
+            .post('/client-info/sip-provision', {
+                sipInfo: [{transport: 'WSS'}]
+            })
+            .then(function(res) {
+                app.io.emit('sipProvision', res.json());
+            })
+            .catch(function(e) {
+                console.error(e);
+                throw e;
             });
-        })
-        .catch(function(e) {
-            console.error(e);
-            throw e;
-        });
+
+    });
 
 });
 

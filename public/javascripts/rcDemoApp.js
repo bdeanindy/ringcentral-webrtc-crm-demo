@@ -1,17 +1,23 @@
 'use strict';
 
-var socket = io.connect();
+var socket = io();
 var online;
-var line;
 var rcAccessToken;
 var rcSipProvision;
 var webPhone;
+var session;
+var line;
 
 // Load jquery if you choose, I have it for convenience of memory
 $(function() {
+    socket.connect();
     // Cache the variable
     var $webPhoneDialer = $('#webPhoneDialer');
     var $callButton = $('#callButton');
+
+    $callButton.on('click', function() {
+        socket.emit('sipProvision');
+    });
 
     // Socket.io
     socket.on('online', function(data, fn) {
@@ -20,7 +26,6 @@ $(function() {
         if( true === online ) {
             $callButton.text('Call Me From Your Browser Now');
             $callButton.removeAttr('disabled');
-            socket.emit('sipProvision');
         }
         fn('YES');
     });
@@ -33,12 +38,30 @@ $(function() {
 
     socket.on('sipProvision', function(data, fn) {
         console.log('New RC WebRTC Sip Provision: ', data);
-        rcSipProvision = data;
-        webPhone = new RingCentral.WebPhone(data);
-        fn('YES');
+        rcSipProvision = data.sipInfo[0] || data.sipInfo;;
+        webPhone = new RingCentral.WebPhone(data, {logLevel:3});
     });
 });
 
+        /*
+        session = webPhone.userAgent.invite('14158905908', {
+            media: {
+                render: {
+                    remote: document.getElementById('remoteVideo'),
+                    local: document.getElementById('localVideo')
+                }
+            },
+            fromNumber: '16503514622',
+            homeCountryId: '1'
+        })
+        .then(function(data) {
+            console.log('New Call Data: ', data);
+        })
+        .catch(function(e) {
+            console.log(e);
+            throw e;
+        });
+        */
 
 /**************** RING CENTRAL WEB PHONE AND UI METHODS *********************/
 function callStarted(e) {
