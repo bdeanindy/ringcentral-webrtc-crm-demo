@@ -7,6 +7,7 @@ var rcSipProvision;
 var webPhone;
 var session;
 var line;
+var QUEUE_NUMBER = '15623215778';
 
 // Load jquery if you choose, I have it for convenience of memory
 $(function() {
@@ -21,7 +22,7 @@ $(function() {
 
     // Socket.io
     socket.on('online', function(data, fn) {
-        console.log('online: ', data);
+        //console.log('online: ', data);
         online = data.online;
         if( true === online ) {
             $callButton.text('Call Me From Your Browser Now');
@@ -31,16 +32,24 @@ $(function() {
     });
 
     socket.on('rcAuth', function(data, fn) {
-        console.log('New RC Auth Token: ', data);
+        //console.log('New RC Auth Token: ', data);
         rcAccessToken = data.token;
         fn('YES');
     });
 
     socket.on('sipProvision', function(data, fn) {
-        console.log('New RC WebRTC Sip Provision: ', data);
+        //console.log('New RC WebRTC Sip Provision: ', data);
         rcSipProvision = data.sipInfo[0] || data.sipInfo;;
-        console.log('RingCentral: ', RingCentral);
-        webPhone = new RingCentral.WebPhone(data, {logLevel:3});
+        //console.log('RingCentral: ', RingCentral);
+        webPhone = new RingCentral.WebPhone(data, {
+            logLevel:3,
+            audioHelper: {
+                enabled: true, // enables audio feedback when phone is ringing or making call
+                incoming: '/audio/incoming.ogg', // path to audio file for incoming call
+                outgoing: '/audio/outgoing.ogg' // path to audio file for outgoing call
+            }
+        });
+
         webPhone.userAgent.on('invite', onInvite);
         webPhone.userAgent.on('connecting', onConnecting);
         webPhone.userAgent.on('connected', onConnected);
@@ -114,6 +123,30 @@ function registerSIP( checkFlags, transport ) {
         });
 }
 
+function onAccepted(session) {
+    console.log('Event: Accepted', session.request);
+    console.log('To: ', session.request.to.displayNmae, session.request.to.friendlyName);
+    console.log('From: ', session.request.from.displayName, session.request.from.friendlyName);
+
+    var interval = setInterval( function() {
+        var time = session.startTime
+            ? (Math.round((Date.now() - session.startTime) / 1000) + 's')
+            : 'Ringing'
+            ;
+
+        $info.text(
+            'time: ' + time + '\n' + 'startTime: ' + JSON.stringify(session.startTime, null, 2) + '\n'
+        );
+    }, 1000);
+
+    function close() {
+        clearInterval(interval);
+        console.log('TODO: HIDE ME');
+    }
+
+    // TODO: RESUME AT -->  https://github.com/ringcentral/ringcentral-web-phone/blob/master/demo/index.js#L245
+}
+
 /******************* RING CENTRAL WEB PHONE INTERNAL EVENT HANDLERS ******************/
 function onInvite() {
     console.log('onInvite args: ', arguments);
@@ -129,6 +162,22 @@ function onDisconnected() {
 }
 function onRegistered() {
     console.log('onRegistered: ', arguments);
+    var homeCountry = (extension && extension.regionalSettings && extension.regionalSettings.homeCountry)
+        ? extension.regionalSettings.homeCountry.id
+        : null
+        ;
+    var session = webPhone.userAgent.invite(QUEUE_NUMBER, {
+        media: {
+            render: {
+                remote: document.getElementById('remoteVideo');
+                local: document.getElementById('localVideo');
+            }
+        },
+        fromNumber: username,
+        homeCountryId: homeCountry
+    });
+
+    onAccepted( session );
 }
 function onUnregistered() {
     console.log('onUnregistered: ', arguments);
