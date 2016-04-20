@@ -4,7 +4,8 @@
  * Module dependencies.
  */
 
-var app = require('../app');
+// Quick hack to mount socket.io properly using the new Express Generator
+var app = require('../app').app;
 var debug = require('debug')('bdean-webrtc-demo:server');
 var http = require('http');
 
@@ -19,8 +20,8 @@ app.set('port', port);
  * Create HTTP server.
  */
 
-var server = http.createServer(app);
-app.io.attach(server);
+// Quick hack to mount socket.io properly using the new Express Generator
+var server = require('../app').server;
 
 /**
  * Listen on provided port, on all network interfaces.

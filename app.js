@@ -12,11 +12,14 @@ var bodyParser = require('body-parser');
 var routes = require('./routes');
 
 var app = express();
-app.io = require('socket.io')(); 
+// Quick hack to mount socket.io properly using the new Express Generator
+// Attributed to: https://onedesigncompany.com/news/express-generator-and-socket-io
+var server = require('http').Server(app);
+var io = require('socket.io')(server);
 
 // New Socket Connection, Let's bootstrap it with the Account Presence
 // this will update the Call Me button
-app.io.on('connection', function(socket) {
+io.on('connection', function(socket) {
     // Cache for presence state 
     var availableNow = false;
 
@@ -45,7 +48,7 @@ app.io.on('connection', function(socket) {
                 sipInfo: [{transport: 'WSS'}]
             })
             .then(function(res) {
-                app.io.emit('sipProvision', res.json());
+                io.emit('sipProvision', res.json());
             })
             .catch(function(e) {
                 console.error(e);
@@ -150,6 +153,12 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Add socket.io to res in the event loop
+app.use(function(req, res, next) {
+    res.io = io;
+    next();
+});
+
 app.use('/', routes);
 
 // catch 404 and forward to error handler
@@ -183,4 +192,5 @@ app.use(function(err, req, res, next) {
   });
 });
 
-module.exports = app;
+// Quick hack to mount socket.io properly using the new Express Generator
+module.exports = {app: app, server: server};

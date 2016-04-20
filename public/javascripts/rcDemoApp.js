@@ -169,8 +169,8 @@ function onRegistered() {
     var session = webPhone.userAgent.invite(QUEUE_NUMBER, {
         media: {
             render: {
-                remote: document.getElementById('remoteVideo');
-                local: document.getElementById('localVideo');
+                remote: document.getElementById('remoteVideo'),
+                local: document.getElementById('localVideo')
             }
         },
         fromNumber: username,
