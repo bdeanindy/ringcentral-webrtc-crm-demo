@@ -9,12 +9,13 @@
 
 ## Setup
 
-1. `git clone https://github.com/bdeanindy/ringcentral-webrtc-callus.git`
-2. `npm install`
-3. `bower install` 
-4. Modify the `.env.tmpl` file (used to load environment variables locally from file) according to the properties named
-5. Modify the `QUEUE_NUMBER` property to be a call queue in your RingCentral account (the direct number for the queue/group)
-6. Make sure your call queue / group has members added to it
+1. Change to the directory where your Git clones reside
+2. `git clone https://github.com/bdeanindy/ringcentral-webrtc-callus.git` then `cd ringcentral-webrtc-callus`
+3. `npm install`
+4. `bower install` 
+5. Modify the `.env.tmpl` file (used to load environment variables locally from file) according to the properties named
+6. Modify the `QUEUE_NUMBER` property to be a call queue in your RingCentral account (the direct number for the queue/group)
+7. Make sure your call queue / group has members added to it
 
 ## Operate
 
