@@ -20,23 +20,6 @@ var io = require('socket.io')(server);
 // New Socket Connection, Let's bootstrap it with the Account Presence
 // this will update the Call Me button
 io.on('connection', function(socket) {
-    // Cache for presence state 
-    var availableNow = false;
-
-    // The loops through all the presence information and tells if someone is logged in to RingCentral
-    app.locals.accountPresence.forEach(function(item) {
-        if('Available' === item.presenceStatus) {
-            availableNow = true;
-        }
-    });
-
-    // This will broadcast our initialization state to the client
-    socket.emit('online', {
-        online: availableNow
-    }, function(data) {
-        console.log('Available Now Received: ', data);
-    });
-
     // This will broadcast our RingCentral access_token to the client
     socket.emit('rcAuth', {token: app.locals.rcAuth.access_token}, function(data) {
         console.log('rcAuth received: ', data);
@@ -48,15 +31,13 @@ io.on('connection', function(socket) {
                 sipInfo: [{transport: 'WSS'}]
             })
             .then(function(res) {
-                io.emit('sipProvision', res.json());
+                io.emit('sipProvisionResponse', res.json());
             })
             .catch(function(e) {
                 console.error(e);
                 throw e;
             });
-
     });
-
 });
 
 // Setup RingCentral
@@ -78,8 +59,6 @@ platform
         extension: process.env.RC_EXTENSION,
         password: process.env.RC_PASSWORD 
     })
-    .then(getExtensions)
-    .then(createSubscription)
     .catch(function(e) {
         console.error('RC LOGIN ERROR: ', e);
         throw e;
@@ -88,57 +67,6 @@ platform
 platform.on(platform.events.loginSuccess, function(data) {
     //console.log('RC PLATFOMR LOGIN SUCCESS DATA: ', data.json());
     app.locals.rcAuth = data.json();
-});
-
-function getExtensions() {
-    return platform
-        .get('/account/~/extension')
-        .then(function(extensions) {
-            var data = extensions.json();
-            //console.log(' getExtension RESPONSE DATA: ', data);
-            return data.records.map(function(ext) {
-                var detailedPresenceURI = '/account/~/extension/' + ext.id + '/presence?detailedTelephonyState=true';
-                platform.get(detailedPresenceURI).then(function(presence) {
-                    app.locals.accountPresence.push(presence.json());
-                    //console.log('ACCOUNT PRESENCE: ', app.locals.accountPresence);
-                })
-                .catch(function(e) {
-                    console.error(e);
-                    throw(e);
-                });;
-                return detailedPresenceURI;
-            });
-        })
-        .catch(function(e) {
-            console.error(e);
-            throw e;
-        });
-}
-
-function createSubscription(eventFilters) {
-    return subscription
-        .setEventFilters(eventFilters)
-        .register()
-        .then(function(response) {
-            // TODO: Handle create/renew/loginSuccess/loginFail
-            //console.log('SUBSCRIPTION RESPONSE: ', response);
-            registeredSubscriptions.push(response);
-        })
-        .catch(function(e) {
-            console.error(e);
-            throw e;
-        });
-}
-
-subscription.on(subscription.events.notification, function(msg) {
-    if(msg.event.indexOf('/presence') > -1) {
-        // TODO: Update the account presence
-        console.log('NEW SUBSCRIPTION MESSAGE FOR PRESENCE: ', msg);
-    } else if(msg.event.indexOf('/message-store') > -1) {
-        console.log('NEW SUBSCRIPTION MESSAGE FOR MESSAGE STORE: ', msg);
-    } else {
-        console.log('NEW SUBSCRIPTION MESSAGE: ', msg);
-    }
 });
 
 // view engine setup

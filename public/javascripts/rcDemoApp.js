@@ -1,43 +1,46 @@
 'use strict';
 
-var socket = io();
-var online;
+var socket = io('//localhost:3000');
 var rcAccessToken;
 var rcSipProvision;
 var webPhone;
 var session;
 var line;
 var QUEUE_NUMBER = '15623215778';
+var SOURCE_NUMBER = '15559994444';
+var $webPhoneDialer;
+var $callButton;
 
-// Load jquery if you choose, I have it for convenience of memory
+// Since I'm using Bootstrap which requires jQuery, I'm using jQuery.
+// If you aren't using Bootstrap, you don't have to use jQuery
 $(function() {
     socket.connect();
+    socket.emit('sipProvision');
     // Cache the variable
-    var $webPhoneDialer = $('#webPhoneDialer');
-    var $callButton = $('#callButton');
+    $webPhoneDialer = $('#webPhoneDialer');
+    $callButton = $('#callButton');
 
     $callButton.on('click', function() {
-        socket.emit('sipProvision');
-    });
-
-    // Socket.io
-    socket.on('online', function(data, fn) {
-        //console.log('online: ', data);
-        online = data.online;
-        if( true === online ) {
-            $callButton.text('Call Me From Your Browser Now');
-            $callButton.removeAttr('disabled');
+        // TODO: If WebPhone is registered, then use it
+        // Make a phone call to the Goofy Goobers example Call Queue
+        if(!session) {
+            placeCall();
+        } else {
+            session.terminate();
+            $callButton.removeClass('btn-danger');
+            socket.emit('sipProvision');
         }
-        fn('YES');
-    });
 
-    socket.on('rcAuth', function(data, fn) {
+    });
+    socket.on('rcAuth', function(data) {
         //console.log('New RC Auth Token: ', data);
         rcAccessToken = data.token;
-        fn('YES');
     });
 
-    socket.on('sipProvision', function(data, fn) {
+    socket.on('sipProvisionResponse', function(data) {
+        $callButton.text('Call Goofy Goobers!');
+        $callButton.removeAttr('disabled');
+        $callButton.addClass('btn-success');
         //console.log('New RC WebRTC Sip Provision: ', data);
         rcSipProvision = data.sipInfo[0] || data.sipInfo;;
         //console.log('RingCentral: ', RingCentral);
@@ -61,130 +64,87 @@ $(function() {
     });
 });
 
-        /*
-        session = webPhone.userAgent.invite('14158905908', {
-            media: {
-                render: {
-                    remote: document.getElementById('remoteVideo'),
-                    local: document.getElementById('localVideo')
-                }
-            },
-            fromNumber: '16503514622',
-            homeCountryId: '1'
-        })
-        .then(function(data) {
-            console.log('New Call Data: ', data);
-        })
-        .catch(function(e) {
-            console.log(e);
-            throw e;
-        });
-        */
-
-/**************** RING CENTRAL WEB PHONE AND UI METHODS *********************/
-function callStarted(e) {
-    line = e;
-}
-
-function registerSIP( checkFlags, transport ) {
-    transport = transport || 'WSS';
-    return platform
-        .post('/client-info/sip-provision', {
-            sipInfo: [{
-                transport: transport
-            }]
-        })
-        .then(function(res) {
-
-
-            var data = res.json();
-
-            //data.appKey = localStorage.webPhoneAppKey;
-
-            console.log("Sip Provisioning Data from RC API: " + JSON.stringify(data));
-
-            return webPhone.register(data, checkFlags)
-                .then(function(){
-                    console.log('Registered');
-                })
-                .catch(function(e) {
-                    var err = e && e.status_code && e.reason_phrase
-                        ? new Error(e.status_code + ' ' + e.reason_phrase)
-                        : (e && e.data)
-                                  ? new Error('SIP Error: ' + e.data)
-                                  : new Error('SIP Error: ' + (e || 'Unknown error'));
-                    console.error('SIP Error: ' + ((e && e.data) || e) + '\n');
-                    return Promise.reject(err);
-                });
-
-        }).catch(function(e) {
-            console.error(e);
-            return Promise.reject(e);
-        });
-}
-
+/**************** RING CENTRAL WEB PHONE INTERFACING AND UI METHODS *********************/
 function onAccepted(session) {
-    console.log('Event: Accepted', session.request);
-    console.log('To: ', session.request.to.displayNmae, session.request.to.friendlyName);
-    console.log('From: ', session.request.from.displayName, session.request.from.friendlyName);
+    //console.log('Call: Accepted', session.request);
+    //console.log('To: ', session.request.to.displayNmae, session.request.to.friendlyName);
+    //console.log('From: ', session.request.from.displayName, session.request.from.friendlyName);
 
-    var interval = setInterval( function() {
-        var time = session.startTime
-            ? (Math.round((Date.now() - session.startTime) / 1000) + 's')
-            : 'Ringing'
-            ;
+    session.on('accepted', function() {
+        console.log('Accepted');
+    });
+    session.on('rejected', function() {
+        console.log('Rejected');
+    });
+    session.on('terminated', function() {
+        console.log('Terminated');
+    });
+    session.on('bye', function() {
+        console.log('Goodbye');
+    });
 
-        $info.text(
-            'time: ' + time + '\n' + 'startTime: ' + JSON.stringify(session.startTime, null, 2) + '\n'
-        );
-    }, 1000);
-
-    function close() {
-        clearInterval(interval);
-        console.log('TODO: HIDE ME');
-    }
-
-    // TODO: RESUME AT -->  https://github.com/ringcentral/ringcentral-web-phone/blob/master/demo/index.js#L245
+    session.mediaHandler.on('iceConnection', function() { console.log('ICE: iceConnection'); });
+    session.mediaHandler.on('iceConnectionChecking', function() { console.log('Event: ICE: iceConnectionChecking'); });
+    session.mediaHandler.on('iceConnectionConnected', function() { console.log('Event: ICE: iceConnectionConnected'); });
+    session.mediaHandler.on('iceConnectionCompleted', function() { console.log('Event: ICE: iceConnectionCompleted'); });
+    session.mediaHandler.on('iceConnectionFailed', function() { console.log('Event: ICE: iceConnectionFailed'); });
+    session.mediaHandler.on('iceConnectionDisconnected', function() { console.log('Event: ICE: iceConnectionDisconnected'); });
+    session.mediaHandler.on('iceConnectionClosed', function() { console.log('Event: ICE: iceConnectionClosed'); });
+    session.mediaHandler.on('iceGatheringComplete', function() { console.log('Event: ICE: iceGatheringComplete'); });
+    session.mediaHandler.on('iceGathering', function() { console.log('Event: ICE: iceGathering'); });
+    session.mediaHandler.on('iceCandidate', function() { console.log('Event: ICE: iceCandidate'); });
+    session.mediaHandler.on('userMedia', function() { console.log('Event: ICE: userMedia'); });
+    session.mediaHandler.on('userMediaRequest', function() { console.log('Event: ICE: userMediaRequest'); });
+    session.mediaHandler.on('userMediaFailed', function() { console.log('Event: ICE: userMediaFailed'); });
 }
 
-/******************* RING CENTRAL WEB PHONE INTERNAL EVENT HANDLERS ******************/
-function onInvite() {
-    console.log('onInvite args: ', arguments);
-}
-function onConnecting() {
-    console.log('onConnecting: ', arguments);
-}
-function onConnected() {
-    console.log('onConnected: ', arguments);
-}
-function onDisconnected() {
-    console.log('onDisconnected: ', arguments);
-}
-function onRegistered() {
-    console.log('onRegistered: ', arguments);
-    var homeCountry = (extension && extension.regionalSettings && extension.regionalSettings.homeCountry)
-        ? extension.regionalSettings.homeCountry.id
-        : null
-        ;
-    var session = webPhone.userAgent.invite(QUEUE_NUMBER, {
+function placeCall() {
+    $callButton.addClass('btn-danger');
+    $callButton.text('Hang Up');
+    session = webPhone.userAgent.invite(QUEUE_NUMBER, {
         media: {
             render: {
                 remote: document.getElementById('remoteVideo'),
                 local: document.getElementById('localVideo')
             }
         },
-        fromNumber: username,
-        homeCountryId: homeCountry
+        fromNumber: SOURCE_NUMBER
     });
 
     onAccepted( session );
 }
+
+/******************* RING CENTRAL WEB PHONE INTERNAL EVENT HANDLERS ******************/
+function onInvite() {
+    console.log('onInvite args: ', arguments);
+}
+
+function onConnecting() {
+    console.log('onConnecting: ', arguments);
+}
+
+function onConnected() {
+    console.log('onConnected: ', arguments);
+}
+
+function onDisconnected() {
+    console.log('onDisconnected: ', arguments);
+}
+
+function onRegistered(data) {
+    console.log('onRegistered: ', arguments);
+    console.log('onRegistered->data.method: ', data.method);
+    console.log('onRegistered->data.reason_phrase: ', data.reason_phrase);
+}
+
 function onUnregistered() {
     console.log('onUnregistered: ', arguments);
 }
+
 function onRegistrationFailed() {
     console.log('onRegistrationFailed: ', arguments);
 }
+
 function onMessage() {
     console.log('onMessage: ', arguments);
 }
