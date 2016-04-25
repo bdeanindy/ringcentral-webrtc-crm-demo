@@ -73,12 +73,24 @@ function onAccepted(session) {
     session.on('accepted', function() {
         console.log('Accepted');
     });
+
+    session.on('cancelled', function() {
+        console.log('Cancelled');
+    });
+
     session.on('rejected', function() {
         console.log('Rejected');
     });
+
+    session.on('replaced', function(newSession) {
+        console.log('Replaced: old session ', session, ' has been replaced with: ', newSession);
+        onAccepted(newSession);
+    });
+
     session.on('terminated', function() {
         console.log('Terminated');
     });
+
     session.on('bye', function() {
         console.log('Goodbye');
     });
