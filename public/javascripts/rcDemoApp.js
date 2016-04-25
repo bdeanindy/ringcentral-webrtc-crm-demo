@@ -1,6 +1,6 @@
 'use strict';
 
-var socket = io('//localhost:3000');
+var socket = io();
 var rcAccessToken;
 var rcSipProvision;
 var webPhone;
