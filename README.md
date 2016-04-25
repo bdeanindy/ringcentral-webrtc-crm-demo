@@ -1,11 +1,13 @@
 # RingCentral WebRTC Call Us Sample Application
 
+This demo application provides a complete view (server and client-side code) showing how to use the RingCentral WebRTC feature for voice calls from within the browser, and how to handle your API keys properly (making sure not to expose them server-side).
+
 ## Prerequisites
 
 * A valid RingCentral account with access to Developer Platform
 * Your RingCentral Sandbox account configured
-* Node.js, Express.js, Bower installed
-* A RingCentral Application defined in the Developer Portal (which has VOIP Calling and Interoperability permissions enabled)
+* Node.js, Express.js, Bower installed (globally)
+* A RingCentral Application defined which has VOIP Calling and Interoperability permissions enabled
 
 ## Setup
 
