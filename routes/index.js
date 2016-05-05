@@ -4,7 +4,11 @@ var router = express.Router();
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
-    res.render('index', { title: 'RingCentral JS SDK - WebRTC Test App', webPhoneTitle: 'Speak to a Person', groupPhoneNumber: 'Phone Number: +' + process.env.GROUP_PHONE_NUMBER });
+    res.render('index', {
+        title: 'RingCentral JS SDK - WebRTC Test App',
+        webPhoneTitle: 'Speak to a Person',
+        groupPhoneNumber: 'Phone Number: +' + process.env.GROUP_PHONE_NUMBER
+    });
 });
 
 module.exports = router;
