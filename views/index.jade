@@ -3,7 +3,87 @@ extends layout
 block content
   h1= title
 
-  div(class='row-fluid')
-      div(id='webPhoneDialer', class='span4 offset4')
-            h3= webPhoneTitle
-            a.btn.btn-primary.btn-success(id='callButton', href='#', title=groupPhoneNumber, disabled='disabled') Loading...
+  #myRepeater.repeater
+        .repeater-header
+          .repeater-header-left
+            span.repeater-title Awesome Repeater
+            .repeater-search
+              .search.input-group
+                input.form-control(type='search', placeholder='Search')
+                span.input-group-btn
+                  button.btn.btn-default(type='button')
+                    span.glyphicon.glyphicon-search
+                    span.sr-only Search
+          .repeater-header-right
+            .btn-group.selectlist.repeater-filters(data-resize='auto')
+              button.btn.btn-default.dropdown-toggle(type='button', data-toggle='dropdown')
+                span.selected-label  
+                span.caret
+                span.sr-only Toggle Filters
+              ul.dropdown-menu(role='menu')
+                li(data-value='all', data-selected='true')
+                  a(href='#') all
+                li(data-value='some')
+                  a(href='#') some
+                li(data-value='others')
+                  a(href='#') others
+              input.hidden.hidden-field(name='filterSelection', readonly='readonly', aria-hidden='true', type='text')
+            .btn-group.repeater-views(data-toggle='buttons')
+              label.btn.btn-default.active
+                input(name='repeaterViews', type='radio', value='list')
+                span.glyphicon.glyphicon-list
+              label.btn.btn-default
+                input(name='repeaterViews', type='radio', value='thumbnail')
+                span.glyphicon.glyphicon-th
+        .repeater-viewport
+          .repeater-canvas
+          .loader.repeater-loader
+        .repeater-footer
+          .repeater-footer-left
+            .repeater-itemization
+              span
+                span.repeater-start
+                |  - 
+                span.repeater-end
+                |  of 
+                span.repeater-count
+                |  items
+              .btn-group.selectlist(data-resize='auto')
+                button.btn.btn-default.dropdown-toggle(type='button', data-toggle='dropdown')
+                  span.selected-label  
+                  span.caret
+                  span.sr-only Toggle Dropdown
+                ul.dropdown-menu(role='menu')
+                  li(data-value='5')
+                    a(href='#') 5
+                  li(data-value='10', data-selected='true')
+                    a(href='#') 10
+                  li(data-value='20')
+                    a(href='#') 20
+                  li(data-value='50', data-foo='bar', data-fizz='buzz')
+                    a(href='#') 50
+                  li(data-value='100')
+                    a(href='#') 100
+                input.hidden.hidden-field(name='itemsPerPage', readonly='readonly', aria-hidden='true', type='text')
+              span Per Page
+          .repeater-footer-right
+            .repeater-pagination
+              button.btn.btn-default.btn-sm.repeater-prev(type='button')
+                span.glyphicon.glyphicon-chevron-left
+                span.sr-only Previous Page
+              label#myPageLabel.page-label Page
+              .repeater-primaryPaging.active
+                .input-group.input-append.dropdown.combobox
+                  input.form-control(type='text', aria-labelledby='myPageLabel')
+                  .input-group-btn
+                    button.btn.btn-default.dropdown-toggle(type='button', data-toggle='dropdown')
+                      span.caret
+                      span.sr-only Toggle Dropdown
+                    ul.dropdown-menu.dropdown-menu-right
+              input.form-control.repeater-secondaryPaging(type='text', aria-labelledby='myPageLabel')
+              span
+                | of 
+                span.repeater-pages
+              button.btn.btn-default.btn-sm.repeater-next(type='button')
+                span.glyphicon.glyphicon-chevron-right
+                span.sr-only Next Page
