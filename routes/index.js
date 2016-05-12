@@ -5,7 +5,7 @@ var router = express.Router();
 /* GET home page. */
 router.get('/', function(req, res, next) {
     res.render('index', {
-        title: 'RingCentral JS SDK - WebRTC Test App',
+        title: 'RingCentral WebRTC CRM Demo App',
         webPhoneTitle: 'Speak to a Person',
         groupPhoneNumber: 'Phone Number: +' + process.env.GROUP_PHONE_NUMBER
     });

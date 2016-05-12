@@ -1,4 +1,4 @@
-# RingCentral WebRTC Call Us Sample Application
+# RingCentral WebRTC CRM Demo Application
 
 This demo application provides a complete view (server and client-side code) showing how to use the RingCentral WebRTC feature for voice calls from within the browser, and how to handle your API keys properly (making sure not to expose them server-side).
 
