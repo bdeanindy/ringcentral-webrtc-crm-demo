@@ -2,6 +2,8 @@
 
 This demo application provides a complete view (server and client-side code) showing how to use the RingCentral WebRTC feature for voice calls from within the browser, and how to handle your API keys properly (making sure not to expose them server-side).
 
+![Screenshot of demo](/docs/ringcentral-webrtc-crm-demo.png)
+
 ## Prerequisites
 
 * A valid RingCentral account with access to Developer Platform
