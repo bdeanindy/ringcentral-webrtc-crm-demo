@@ -17,8 +17,7 @@ var app = express();
 var server = require('http').Server(app);
 var io = require('socket.io')(server);
 
-// New Socket Connection, Let's bootstrap it with the Account Presence
-// this will update the Call Me button
+// New socket server, allows us to have RT-Updates
 io.on('connection', function(socket) {
     // This will broadcast our RingCentral access_token to the client
     socket.emit('rcAuth', {token: app.locals.rcAuth.access_token}, function(data) {
@@ -53,6 +52,8 @@ var subscription = sdk.createSubscription();
 var registeredSubscriptions = [];
 app.locals.accountPresence = [];
 
+// Let's obtain a RingCentral access_token for our server-side admin user
+// This allows us to setup the application for our needs
 platform
     .login({
         username: process.env.RC_USERNAME,
@@ -64,6 +65,7 @@ platform
         throw e;
     });
 
+// When we obtain a new access_token, store and make available to routes
 platform.on(platform.events.loginSuccess, function(data) {
     //console.log('RC PLATFOMR LOGIN SUCCESS DATA: ', data.json());
     app.locals.rcAuth = data.json();
@@ -73,15 +75,14 @@ platform.on(platform.events.loginSuccess, function(data) {
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
 
-// uncomment after placing your favicon in /public
-//app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
+//app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));  // uncomment after placing your favicon in /public
 app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Add socket.io to res in the event loop
+// Add socket.io to responses in the event loop
 app.use(function(req, res, next) {
     res.io = io;
     next();
