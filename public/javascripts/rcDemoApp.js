@@ -12,10 +12,32 @@ var $callButton;
 var $activeButton;
 var tmpNumberCache;
 
+// RingCentral 3-Legged OAuth
+var rcAuthorizationFlow = function rcAuthorizationFlow() {
+    // Only do this if we have both items
+    if(redirectUri && authorizeUri) {
+        var win = window.open(authorizeUri, 'rcAuthWindow', 'width=800, height=600');
+        var pollOAuth = window.setInterval(function() {
+            try {
+                console.log(win.document.URL);
+                
+                if( win.document.URL.indexOf(redirectUri) != -1 ) {
+                    window.clearInterval(pollOAuth);
+                    win.close();
+                    location.reload()
+                }
+            } catch(e) {
+                console.log(e);
+            }
+        }, 1000);
+    }
+};
 
 // Since I'm using Bootstrap which requires jQuery, I'm using jQuery.
 // If you aren't using Bootstrap, you don't have to use jQuery
 $(function() {
+    var $rcAuthConfigureButton = $('#rcAuthConfigure');
+    $rcAuthConfigureButton.on('click', rcAuthorizationFlow);
     // Declare the columns for your repeater
     var columns = [
         {

@@ -85,6 +85,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Add socket.io to responses in the event loop
 app.use(function(req, res, next) {
     res.io = io;
+    res.platform = platform;
     next();
 });
 

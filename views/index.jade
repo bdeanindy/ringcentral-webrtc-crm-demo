@@ -1,7 +1,10 @@
 extends layout
 
+block scriptVars
+    script.
+        var authorizeUri="!{authorizeUri}";
+        var redirectUri="!{redirectUri}";
 block content
-  h1= title
 
   #myRepeater.repeater
         .repeater-header

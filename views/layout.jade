@@ -16,7 +16,30 @@ html(lang='en')
   body(class='fuelux')
     <video id="remoteVideo" hidden="hidden"></video>
     <video id="localVideo" hidden="hidden" muted="muted"></video>
+
+    div(class='navbar navbar-inverse navbar-fixed-top', role='navigation')
+      div(class='container')
+        div(class='navbar-header')
+          button(type='button', class='navbar-toggle', data-toggle='collapse', data-target='.navbar-collapse')
+            span(class='sr-only') Toggle navigation
+            span(class='icon-bar')
+            span(class='icon-bar')
+            span(class='icon-bar')
+          a(class='navbar-brand', href='./index.html', style='color:#FFF;font-size:150%')
+            span(style='color:deepskyblue') WebRTC 
+              span(style='color:orange')  Demo
+                i(class='fa fa-rss fa-rotate-45', style='color:deepskyblue')
+        div(class='navbar-collapse collapse')
+          ul(id='menu-bar-items', class='nav navbar-nav')
+
+          div(class='btn-group pull-right', style='margin-top:10px')
+            button(type='button', class='btn btn-sm btn-default' id='rcAuthConfigure')
+              i(class='fa fa-wrench') Configure
+
+          ul(class='top-menu-right')
+
     block content
+  block scriptVars
   script(type='text/javascript', src='/vendor/jquery/dist/jquery.min.js')
   script(type='text/javascript', src='//cdnjs.cloudflare.com/ajax/libs/underscore.js/1.7.0/underscore-min.js')
   script(type='text/javascript', src='/vendor/sip.js/dist/sip.js')
@@ -29,3 +52,4 @@ html(lang='en')
   script(type='text/javascript', src='/vendor/ringcentral-web-phone/src/ringcentral-web-phone.js')
   script(type='text/javascript', src='/socket.io/socket.io.js')
   script(type='text/javascript', src='/javascripts/rcDemoApp.js')
+  block scripts
