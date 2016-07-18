@@ -69,6 +69,7 @@ platform
 platform.on(platform.events.loginSuccess, function(data) {
     //console.log('RC PLATFOMR LOGIN SUCCESS DATA: ', data.json());
     app.locals.rcAuth = data.json();
+    app.locals.platform = platform;
 });
 
 // view engine setup

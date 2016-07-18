@@ -36,6 +36,19 @@ var rcAuthorizationFlow = function rcAuthorizationFlow() {
 // Since I'm using Bootstrap which requires jQuery, I'm using jQuery.
 // If you aren't using Bootstrap, you don't have to use jQuery
 $(function() {
+    $.ajax({
+        url: '/rc/extensions', 
+        success: function(data, state, xhr) {
+            console.log('Extensions in the client...');
+            console.log(data);
+        },
+        error: function(xhr, state, err) {
+            console.log('Error fetching extensions...');
+            console.log(err);
+        },
+        dataType: 'json'
+    });
+
     var $rcAuthConfigureButton = $('#rcAuthConfigure');
     $rcAuthConfigureButton.on('click', rcAuthorizationFlow);
     // Declare the columns for your repeater

@@ -58,4 +58,20 @@ router.get('/redirect', function(req, res) {
     }
 });
 
+router.get('/rc/extensions', function(req, res) {
+    console.log('requesting extensions');
+
+    // TODO: Handle any sorting requests from the front-end component
+    req.app.locals.platform.get('/account/~/extension/')
+    .then(function(extensions) {
+        console.log('API Returned Extensions...');
+        console.log(extensions);
+        res.send(extensions.json());
+    })
+    .catch(function(e) {
+        console.error(e);
+        throw(e);
+    });
+});
+
 module.exports = router;
