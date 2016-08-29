@@ -1,0 +1,42 @@
+var columns = [
+    {
+        label: 'First Name',
+        property: 'firstName',
+        sortable: true
+    },
+    {
+        label: 'Last Name',
+        property: 'lastName',
+        sortable: true
+    },
+    {
+        label: 'Name',
+        property: 'name',
+        sortable: true
+    },
+    {
+        label: 'Type',
+        property: 'type',
+        sortable: true
+    },
+    {
+        label: 'Phone',
+        property: 'phone',
+        sortable: true
+    },
+    {
+        label: 'Extension',
+        property: 'extensionNumber',
+        sortable: true
+    },
+    {
+        label: 'URI',
+        property: 'uri',
+        sortable: true
+    },
+    {
+        label: 'Enabled',
+        property: 'enabled',
+        sortable: false
+    }
+];

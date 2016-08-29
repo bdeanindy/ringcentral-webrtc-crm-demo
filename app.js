@@ -20,10 +20,6 @@ var io = require('socket.io')(server);
 // New socket server, allows us to have RT-Updates
 io.on('connection', function(socket) {
     // This will broadcast our RingCentral access_token to the client
-    socket.emit('rcAuth', {token: app.locals.rcAuth.access_token}, function(data) {
-        console.log('rcAuth received: ', data);
-    });
-
     socket.on('sipProvision', function(options) {
         platform
             .post('/client-info/sip-provision', {

@@ -7,7 +7,8 @@ router.get('/', function(req, res, next) {
     var token = res.platform.auth().data();
     var tokenJSON = token.access_token ? token.access_token : '';
     res.render('index', {
-        authorizeUri: res.platform.authUrl({
+        authorizeData: res.platform.authUrl({
+            brandId: process.env.RC_APP_BRAND_ID,
             redirectUri: process.env.RC_REDIRECT_URI,
             state: process.env.RC_REDIRECT_STATE
         }),

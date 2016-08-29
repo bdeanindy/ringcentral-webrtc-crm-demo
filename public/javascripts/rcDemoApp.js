@@ -15,8 +15,8 @@ var tmpNumberCache;
 // RingCentral 3-Legged OAuth
 var rcAuthorizationFlow = function rcAuthorizationFlow() {
     // Only do this if we have both items
-    if(redirectUri && authorizeUri) {
-        var win = window.open(authorizeUri, 'rcAuthWindow', 'width=800, height=600');
+    if(authorizeData && redirectUri) {
+        var win = window.open(authorizeData, 'rcAuthWindow', 'width=800, height=600');
         var pollOAuth = window.setInterval(function() {
             try {
                 console.log(win.document.URL);
@@ -30,17 +30,29 @@ var rcAuthorizationFlow = function rcAuthorizationFlow() {
                 console.log(e);
             }
         }, 1000);
+    } else {
+        throw new Error('Server-side code is not supplying expected data during initial response');
     }
 };
 
-// Since I'm using Bootstrap which requires jQuery, I'm using jQuery.
-// If you aren't using Bootstrap, you don't have to use jQuery
+// Since I'm using FuelUX which requires Bootstrap which requires jQuery, I'm using jQuery.
+// If you aren't using FuelUX || Bootstrap, you don't have to use jQuery
 $(function() {
+    // Cache the repeater DOM element for later use
+    var repeater = $('#myRepeater');
+    // 3-Legged OAuth Configuration
+    var $rcAuthConfigureButton = $('#rcAuthConfigure');
+    // RingCentral Extensions Request Variable placeholder
+    var rcExtensions;
+    // Uses your RingCentral Extensions to populate the FuelUX Repeater
+    var items = [];
     $.ajax({
         url: '/rc/extensions', 
         success: function(data, state, xhr) {
             console.log('Extensions in the client...');
             console.log(data);
+            rcExtensions = data;
+
         },
         error: function(xhr, state, err) {
             console.log('Error fetching extensions...');
@@ -49,63 +61,65 @@ $(function() {
         dataType: 'json'
     });
 
-    var $rcAuthConfigureButton = $('#rcAuthConfigure');
     $rcAuthConfigureButton.on('click', rcAuthorizationFlow);
-    // Declare the columns for your repeater
-    var columns = [
-        {
-            label: 'First Name',
-            property: 'firstName',
-            sortable: true
-        },
-        {
-            label: 'Last Name',
-            property: 'lastName',
-            sortable: true
-        },
-        {
-            label: 'Phone Number',
-            property: 'phone',
-            sortable: false
-        },
-        {
-            label: 'Status',
-            property: 'status',
-            sortable: false
+
+    for( var ext in rcExtensions.records ) {
+        items.push({
+            id: ext.id,
+            firstName: ext.contact.firstName,
+            lastName: ext.contact.lastName,
+            name: ext.name,
+            phone: '16506429233' + '*' + ext.extensionNumber,
+            extensionNumber: ext.extensionNumber,
+            type: ext.type,
+            enabled: ext.status,
+            uri: ext.uri
+        });
+    }
+
+    function getExtensionPhoneNumbers(options) {
+        options = options || {};
+        if(options.records) {
+            for(var ext in options.records) {
+                // TODO: GET THE EXTENSION PHONE NUMBER LIST
+                $.ajax({
+                    url: ext.uri + '/phone-number',
+                    success: function(data, state, xhr) {
+                        console.log('Extension Phone Numbers for ' + ext.extensionNumber);
+                        console.log(data);
+                    },
+                    error: function(xhr, state, err) {
+                        console.log('Error fetching extension phone numbers');
+                        console.log(err);
+                    },
+                    dataType: 'json'
+                });
+            }
         }
-    ];
-
-    // Define the rows for your data
-    var items = [];
-    var statuses = ['Opportunity', 'Prospect', 'Active', 'Inactive', 'Closed', 'DNC'];
-    var firstNames = ['John', 'Joe', 'Sara', 'Ben', 'Dave', 'Amber', 'Chris', 'Ann', 'Jane', 'Sally'];
-    var lastNames = ['Smith', 'Johnson', 'Torrocco', 'Krone', 'Jones', 'Dean', 'Terry', 'Farmer', 'Waterman', 'Birch', 'Schmidt', 'Andrews', 'Miller', 'Beard', 'Wang', 'Lee'];
-
-
-    function getRandomStatus() {
-        var min = 0;
-        var max = 5;
-        var index = Math.floor(Math.random() * (max - min + 1)) + min;
-        return statuses[index];
     }
 
-    function getFirstName() {
-        return firstNames[Math.floor(Math.random()*firstNames.length)];
-    }
+    // Initializes the application once all data is in place
+    function init(options) {
+        options = options || {};
 
-    function getLastName() {
-        return lastNames[Math.floor(Math.random()*lastNames.length)];
-    }
+        repeater.repeater({
+            list_selectable: false, // (single | multi)
+            list_noItemsHTML: 'No items were found, try again',
 
-    for(var i = 0; i <= 100; i++) {
-        var item = {
-            id: i,
-            firstName: getFirstName(),
-            lastName: getLastName(),
-            phone: QUEUE_NUMBER,
-            status: getRandomStatus()
-        };
-        items.push(item);
+            // override the column output via a custom renderer.
+            // this will allow you to output custom markup for each column.
+            list_columnRendered: customColumnRenderer,
+
+            // override the row output via a custom renderer.
+            // this example will use this to add an "id" attribute to each row.
+            list_rowRendered: customRowRenderer,
+
+            // setup your custom datasource to handle data retrieval;
+            // responsible for any paging, sorting, filtering, searching logic
+            dataSource: customDataSource
+        });
+        repeater.repeater('render');
+
     }
 
     function customColumnRenderer(helpers, callback) {
@@ -140,8 +154,6 @@ $(function() {
         callback();
     }
 
-    // this example uses a static datasource and
-    // underscore is used to filter, sort, search, etc.
     function customDataSource(options, callback) {
         var pageIndex = options.pageIndex;
         var pageSize = options.pageSize;
@@ -184,143 +196,21 @@ $(function() {
             data = searchedData;
         }
 
-        var totalItems = data.length;
-        var totalPages = Math.ceil(totalItems / pageSize);
-        var startIndex = (pageIndex * pageSize) + 1;
-        var endIndex = (startIndex + pageSize) - 1;
-        if(endIndex > data.length) {
-            endIndex = data.length;
-        }
-
-        data = data.slice(startIndex-1, endIndex);
-
+        // Declares the columns for your repeater (using FuelUX)
+        //console.log('Columns...');
+        //console.log(columns);
         var dataSource = {
-            page: pageIndex,
-            pages: totalPages,
-            count: totalItems,
-            start: startIndex,
-            end: endIndex,
-            columns: columns,
+            page: rcExtensions.paging.page,
+            pages: rcExtensions.pagingtotalPages,
+            count: rcExtensions.paging.totalElements,
+            start: rcExtensions.paging.pageStart,
+            end: rcExtensions.paging.pageEnd,
+            columns: columns, // Defined in public/javascripts/columns.js
             items: data
         };
 
         callback(dataSource);
     }
-
-    // Define the data to be displayed in the repeater.
-    function staticDataSource(options, callback) {
-
-        // Define the columns for the grid
-        var columns = [{
-            'label': 'Name', // Column header label.
-            'property': 'name', // The JSON property you are binding to.
-            'sortable': true // Is the column sortable.
-        }, {
-            'label': 'Description',
-            'property': 'description',
-            'sortable': true
-        }, {
-            'label': 'Status',
-            'property': 'status',
-            'sortable': true
-        }, {
-            'label': 'Category',
-            'property': 'category',
-            'sortable': true
-        }];
-
-        // Generate the rows in your dataset.
-        // NOTE: The property names of your items should
-        // match the column properties defined above.
-        function generateDummyData() {
-            var items = [];
-            var amountOfItems = 100; //Change this number
-            var statuses = ['Archived', 'Active', 'Draft'];
-            var categories = ['New', 'Old', 'Upcoming'];
-
-            function getRandomStatus() {
-                var index = Math.floor(Math.random() * statuses.length);
-                return statuses[index];
-            }
-
-            function getRandomCategory() {
-                var index = Math.floor(Math.random() * categories.length);
-                return categories[index];
-            }
-
-            for (var i = 1; i <= amountOfItems; i++) {
-                var item = {
-                    id: i,
-                    name: 'Item ' + i,
-                    description: 'Desc ' + i,
-                    status: getRandomStatus(),
-                    category: getRandomCategory()
-                }
-                items.push(item);
-            };
-
-            // Uncomment these to see in your console the
-            // JSON payload produced by this function.
-            //console.log(JSON.stringify(items));
-            //console.table(items);
-
-            return items;
-        }
-
-        var items = generateDummyData();
-
-        // These are the visible UI options of the repeater,
-        // such as how many items to display per page. They
-        // are provided by the Fuel library.
-        //console.log(options);
-
-        // Set the values that will be used in your dataSource.
-        var pageIndex = options.pageIndex;
-        var pageSize = options.pageSize;
-        var totalItems = items.length;
-        var totalPages = Math.ceil(totalItems / pageSize);
-        var startIndex = (pageIndex * pageSize) + 1;
-        var endIndex = (startIndex + pageSize) - 1;
-        if (endIndex > totalItems) {
-            endIndex = totalItems;
-        }
-        var rows = items.slice(startIndex - 1, endIndex);
-
-        // Define the datasource.
-        var dataSource = {
-            'page': pageIndex,
-            'pages': totalPages,
-            'count': totalItems,
-            'start': startIndex,
-            'end': endIndex,
-            'columns': columns,
-            'items': rows
-        };
-
-        //console.log(dataSource);
-
-        // Pass the datasource back to the repeater.
-        callback(dataSource);
-    }
-
-    var repeater = $('#myRepeater');
-    repeater.repeater({
-        list_selectable: false, // (single | multi)
-        list_noItemsHTML: 'No items were found, try again',
-
-        // override the column output via a custom renderer.
-        // this will allow you to output custom markup for each column.
-        list_columnRendered: customColumnRenderer,
-
-        // override the row output via a custom renderer.
-        // this example will use this to add an "id" attribute to each row.
-        list_rowRendered: customRowRenderer,
-
-        // setup your custom datasource to handle data retrieval;
-        // responsible for any paging, sorting, filtering, searching logic
-        dataSource: customDataSource
-    });
-    repeater.repeater('render');
 
     repeater.on('rendered.fu.repeater', function(){
     });
@@ -332,6 +222,7 @@ $(function() {
     // Cache some DOM elements
     $callButton = $('.callButton');
 
+    // TODO: FIX THIS TO USE NEW FORMAT
     $callButton.on('click', function(item) {
         var phoneNumberToCall = item.target.id;
         tmpNumberCache = phoneNumberToCall;
